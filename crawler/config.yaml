@@ -1,0 +1,9 @@
+crawler:
+  max_pages: 500
+  max_depth: 3
+  seed_urls:
+    - "https://www.wikipedia.org/"
+    - "https://www.scientificamerican.com/"
+    - "https://www.bbc.com/"
+  delay_seconds: 1
+  user_agent: "SemanticCrawler"
