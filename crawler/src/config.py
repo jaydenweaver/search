@@ -1,4 +1,6 @@
 import yaml
+import os
+import re
 from dataclasses import dataclass
 
 @dataclass
@@ -27,10 +29,15 @@ class HTMLConfig:
     chunk_size: int
     overlap: int
 
+env_pattern = re.compile(r'\$\{([^}^{]+)\}')  # matches ${VAR_NAME}
+
 class Config:
     def __init__(self, path):
         with open(path, "r") as f:
-            data = yaml.safe_load(f)
+            raw = f.read()
+
+        raw = env_pattern.sub(lambda m: os.getenv(m.group(1), ""), raw)
+        data = yaml.safe_load(raw)
 
         self.crawler = CrawlerConfig(**data["crawler"])
         self.database = DatabaseConfig(**data["database"])

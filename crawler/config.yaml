@@ -1,9 +1,24 @@
 crawler:
-  max_pages: 500
-  max_depth: 3
   seed_urls:
     - "https://www.wikipedia.org/"
     - "https://www.scientificamerican.com/"
     - "https://www.bbc.com/"
+  max_pages: 500
+  max_depth: 3
   delay_seconds: 1
   user_agent: "SemanticCrawler"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "semantic_search"
+  user: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topic_chunks_to_embed: "chunks_to_embed"
+
+html:
+  chunk_size: 1000
+  overlap: 200
