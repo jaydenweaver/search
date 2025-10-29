@@ -24,11 +24,6 @@ class KafkaConfig:
     bootstrap_servers: str
     topic_chunks_to_embed: str
 
-@dataclass
-class HTMLConfig:
-    chunk_size: int
-    overlap: int
-
 env_pattern = re.compile(r'\$\{([^}^{]+)\}')  # matches ${VAR_NAME}
 
 class Config:
@@ -42,4 +37,3 @@ class Config:
         self.crawler = CrawlerConfig(**data["crawler"])
         self.database = DatabaseConfig(**data["database"])
         self.kafka = KafkaConfig(**data["kafka"])
-        self.html = HTMLConfig(**data["html"])

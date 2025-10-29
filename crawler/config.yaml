@@ -18,7 +18,3 @@ database:
 kafka:
   bootstrap_servers: "localhost:9092"
   topic_chunks_to_embed: "chunks_to_embed"
-
-html:
-  chunk_size: 1000
-  overlap: 200

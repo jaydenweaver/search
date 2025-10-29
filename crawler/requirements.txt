@@ -1,1 +1,3 @@
 yaml
+requests
+bs4
