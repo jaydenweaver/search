@@ -18,9 +18,9 @@ class Crawler:
         self.producer = KafkaProducer(self.config.kafka)
 
         self.visited = set()
-        self.pages = []
 
     def crawl(self):
+        logger.info("Starting crawl.")
         to_visit = list(self.config.crawler.seed_urls)
 
         while to_visit and len(self.visited) < self.config.crawler.max_pages:

@@ -1,3 +1,4 @@
 yaml
 requests
 bs4
+kafka

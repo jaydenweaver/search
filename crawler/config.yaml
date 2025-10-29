@@ -17,4 +17,4 @@ database:
 
 kafka:
   bootstrap_servers: "localhost:9092"
-  topic_chunks_to_embed: "chunks_to_embed"
+  topic_pages_to_chunk: "pages_to_chunk"

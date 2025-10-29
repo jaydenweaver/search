@@ -1,7 +1,9 @@
 from src.crawler import Crawler
-from src.config import Config
+import logging
 
 def run_pipeline(config_path: str):
+    logging.basicConfig(level=logging.INFO)
+
     crawler = Crawler()
     crawler.crawl()
 
