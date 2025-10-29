@@ -36,7 +36,7 @@ class Config:
         with open(path, "r") as f:
             raw = f.read()
 
-        raw = env_pattern.sub(lambda m: os.getenv(m.group(1), ""), raw)
+        raw = env_pattern.sub(lambda m: os.getenv(m.group(1), ""), raw) # sub {VAR_NAME} with matching .env var
         data = yaml.safe_load(raw)
 
         self.crawler = CrawlerConfig(**data["crawler"])
