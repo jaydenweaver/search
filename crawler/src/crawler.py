@@ -36,7 +36,7 @@ class Crawler:
                     page_id = self.db.store_page(url, html)
                     self.producer.send_page_id(page_id)
                     self.visited.add(url)
-                    logger.info(f"Crawled {url} ({len(self.visited) / self.config.crawler.max_pages})")
+                    logger.info(f"Crawled {url} ({len(self.visited)} / {self.config.crawler.max_pages})")
 
                     # find new links
                     for link in self.extract_links(html, url):
