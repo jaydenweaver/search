@@ -25,7 +25,7 @@ class Crawler:
 
         while to_visit and len(self.visited) < self.config.crawler.max_pages:
             url = to_visit.pop(0)
-            
+
             if url in self.visited:
                 continue
 
@@ -44,6 +44,8 @@ class Crawler:
                             to_visit.append(link)
             except Exception as e:
                 logger.error(f"Failed to crawl {url}: {e}")
+            logger.info("Crawing complete.")
+            return list(self.visited)
 
 
     def fetch(self, url):
@@ -60,7 +62,7 @@ class Crawler:
         soup = BeautifulSoup(html, "html.parser")
         links = set()
 
-        # find a tags in html
+        # find <a> tags in html
         for a_tag in soup.find_all("a", href=True):
             href = a_tag['href']
             full_url = urljoin(base_url, href)

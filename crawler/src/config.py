@@ -23,14 +23,13 @@ class DatabaseConfig:
 class KafkaConfig:
     bootstrap_servers: str
     topic_chunks_to_embed: str
-
-env_pattern = re.compile(r'\$\{([^}^{]+)\}')  # matches ${VAR_NAME}
-
+    
 class Config:
     def __init__(self, path):
         with open(path, "r") as f:
             raw = f.read()
 
+        env_pattern = re.compile(r'\$\{([^}^{]+)\}')  # matches ${VAR_NAME}
         raw = env_pattern.sub(lambda m: os.getenv(m.group(1), ""), raw) # sub {VAR_NAME} with matching .env var
         data = yaml.safe_load(raw)
 
