@@ -18,14 +18,17 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 
 ## Features
 
-- **Web Crawling:** Recursively crawls websites with configurable depth and seed URLs.  
-- **HTML Processing:** Cleans HTML by removing scripts/styles and normalizing whitespace.  
-- **Chunking:** Splits long pages into overlapping text chunks for embedding.  
-- **Vector Embeddings:** Uses OpenAI or Sentence Transformers for semantic embeddings.  
-- **Message Queue:** Kafka-based architecture to decouple crawling, chunking, and embedding.  
-- **Database:** PostgreSQL stores page metadata and chunk data.  
-- **Vector Database:** Qdrant performs fast similarity search over embeddings.  
-- **Serverless Cloud Deployment:** Client and search API hosted on AWS Lambda and S3 for scalable, low-maintenance operation.
+| **Feature**                       | **Description**                                                                                 |
+|--------------------------------|---------------------------------------------------------------------------------------------|
+| **Web Crawling**                  | Recursively crawls websites with configurable depth and seed URLs.                          |
+| **HTML Processing**               | Cleans HTML by removing scripts/styles and normalizing whitespace.                           |
+| **Chunking**                      | Splits long pages into overlapping text chunks for embedding.                               |
+| **Vector Embeddings**             | Uses OpenAI for semantic embeddings.                                |
+| **Message Queue**                 | Kafka to decouple crawling, chunking, and embedding.                     |
+| **Database**                      | PostgreSQL stores page metadata and chunk data.                                              |
+| **Vector Database**               | Qdrant performs fast similarity search over embeddings.                                      |
+| **Serverless Cloud Deployment**   | Client and search API hosted on AWS Lambda and S3 for scalable, low-maintenance operation.  |
+
 
 ---
 
@@ -46,16 +49,16 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 
 ## Tech Stack
 
-| Component           | Technology / Library                                   |
+| **Component**           | **Technology / Library**                                   |
 |--------------------|--------------------------------------------------------|
-| Language           | Python 3.11, TypeScript                                |
-| Web Crawling       | requests, BeautifulSoup                                |
-| Text Chunking      | langchain `RecursiveCharacterTextSplitter`           |
-| Vector Embeddings  | OpenAI `text-embedding-3-small`                       |
-| Databases          | PostgreSQL (pages & chunks), Qdrant (embeddings)     |
-| Message Queue      | Kafka                                                  |
-| Cloud Deployment   | AWS Lambda, S3                                       |
-| Web Client         | React                                                   |
+| **Language**           | Python 3.11, TypeScript                                |
+| **Web Crawling**       | requests, BeautifulSoup                                |
+| **Text Chunking**      | langchain `RecursiveCharacterTextSplitter`           |
+| **Vector Embeddings**  | OpenAI `text-embedding-3-small`                       |
+| **Databases**          | PostgreSQL (pages & chunks), Qdrant (embeddings)     |
+| **Message Queue**      | Kafka                                                  |
+| **Cloud Deployment**   | AWS Lambda, S3                                       |
+| **Web Client**         | React                                                   |
 
 
 ---
