@@ -36,3 +36,11 @@ class Config:
         self.crawler = CrawlerConfig(**data["crawler"])
         self.database = DatabaseConfig(**data["database"])
         self.kafka = KafkaConfig(**data["kafka"])
+
+    def __repr__(self) -> str:
+        return (
+            f"Config(database={self.database}, "
+            f"kafka={self.kafka}, "
+            f"crawler={self.crawler})"
+        )
+
