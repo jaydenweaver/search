@@ -60,8 +60,8 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 
 1. Clone the repository:
 ```
-git clone https://github.com/yourusername/semantic-search-engine.git
-cd semantic-search-engine
+git clone https://github.com/jaydenweaver/search.git
+cd search
 ```
 2. Install dependencies:
 ```
