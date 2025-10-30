@@ -15,20 +15,19 @@ logger = logging.getLogger(__name__)
 class Chunker:
     def __init__(self, config: Config):
         self.config = config
-        self.db = Database(config.database)
         self.producer = KafkaProducer(config.kafka)
         self.consumer = KafkaConsumerWrapper(
             config.kafka,
             topic=config.kafka.topic_pages_to_chunk
         )
 
-        self.strip_scripts = config.html.strip_scripts
-        self.clean_whitespace = config.html.clean_whitespace
-        self.include_metadata = config.html.include_metadata
+        self.strip_scripts = config.chunk.strip_scripts
+        self.clean_whitespace = config.chunk.clean_whitespace
+        self.include_metadata = config.chunk.include_metadata
 
         self.splitter = RecursiveCharacterTextSplitter(
-            chunk_size=config.html.chunk_size,
-            chunk_overlap=config.html.overlap,
+            chunk_size=config.chunk.chunk_size,
+            chunk_overlap=config.chunk.overlap,
             length_function=len
         )
 
@@ -48,7 +47,7 @@ class Chunker:
             logger.warning(f"Page ID {page_id} not found in database")
             return
 
-        html_content = page["content"]
+        html_content = page["html"]
 
         cleaned_text = self.clean_html(html_content)
 
@@ -75,6 +74,7 @@ class Chunker:
 
     def run(self):
         logger.info("Chunker service started.")
+        self.db = Database(self.config.database)
         try:
             for message in self.consumer.consume():
                 page_id = message.value.get("page_id")
@@ -85,6 +85,7 @@ class Chunker:
         except KeyboardInterrupt:
             logger.info("Chunker service stopped by user.")
         finally:
+            self.db.close()
             self.consumer.close()
             self.producer.close()
 
