@@ -30,14 +30,13 @@ class KafkaProducer:
         message = {"page_id": page_id}
 
         try:
-            future = self.producer.send(self.config.topic_pages_to_chunk, value=message)
-            res = future.get(timeout=10)
+            self.producer.send(self.config.topic_pages_to_chunk, value=message)
             logger.info(f"Sent page_id: {page_id} to {self.topic_pages_to_chunk}")
         except Exception as e:
             logger.error(f"Failed to send page_id {page_id}: {e}")
     
     def close(self):
-        """Flush and close the Kafka producer."""
+        """ Flush and close the Kafka producer. """
         if self.producer:
             self.producer.flush()
             self.producer.close()
