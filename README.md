@@ -49,7 +49,7 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 - **Language**: Python 3.11  
 - **Web Crawling**: `requests`, `BeautifulSoup`  
 - **Text Chunking**: `langchain` `RecursiveCharacterTextSplitter`  
-- **Vector Embeddings**: OpenAI `text-embedding-3-small` or HuggingFace `all-mpnet-base-v2`  
+- **Vector Embeddings**: OpenAI `text-embedding-3-small`
 - **Databases**: PostgreSQL for pages & chunks, Qdrant for embeddings  
 - **Message Queue**: Kafka for event-driven architecture  
 - **Deployment**: AWS Lambda, S3, EC2 optional  
@@ -59,20 +59,20 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 ## Setup
 
 1. Clone the repository:
-
+```
 git clone https://github.com/yourusername/semantic-search-engine.git
 cd semantic-search-engine
-
+```
 2. Install dependencies:
-
+```
 pip install -r requirements.txt
-
+```
 3. Configure environment variables (for sensitive info):
-
+```
 export DB_USER=postgres
 export DB_PASSWORD=yourpassword
 export OPENAI_API_KEY=your_api_key
-
+```
 4. Edit `config.yaml` to set crawler seeds, Kafka topics, and chunking parameters.
 
 ---
