@@ -46,13 +46,17 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 
 ## Tech Stack
 
-- **Language**: Python 3.11  
-- **Web Crawling**: `requests`, `BeautifulSoup`  
-- **Text Chunking**: `langchain` `RecursiveCharacterTextSplitter`  
-- **Vector Embeddings**: OpenAI `text-embedding-3-small`
-- **Databases**: PostgreSQL for pages & chunks, Qdrant for embeddings  
-- **Message Queue**: Kafka for event-driven architecture  
-- **Deployment**: AWS Lambda, S3, EC2 optional  
+| Component           | Technology / Library                                   |
+|--------------------|--------------------------------------------------------|
+| Language           | Python 3.11, TypeScript                                |
+| Web Crawling       | requests, BeautifulSoup                                |
+| Text Chunking      | langchain `RecursiveCharacterTextSplitter`           |
+| Vector Embeddings  | OpenAI `text-embedding-3-small`                       |
+| Databases          | PostgreSQL (pages & chunks), Qdrant (embeddings)     |
+| Message Queue      | Kafka                                                  |
+| Cloud Deployment   | AWS Lambda, S3                                       |
+| Web Client         | React                                                   |
+
 
 ---
 
@@ -80,22 +84,22 @@ export OPENAI_API_KEY=your_api_key
 ## Usage
 
 ### Running the crawler
-
+```
 python main.py --service crawler
-
+```
 ### Running the chunker
-
+```
 python main.py --service chunker
-
+```
 ### Running the embedding service
-
+```
 python main.py --service embedder
-
+```
 ### Querying the search API
-
+```
 - Access the client hosted on S3 or via serverless API Gateway  
 - Enter a search query to get semantically ranked results from Qdrant
-
+```
 ---
 
 ## Configuration
