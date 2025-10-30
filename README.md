@@ -31,11 +31,12 @@ A cloud-deployed, serverless-ready semantic search engine that crawls websites, 
 
 ## Architecture
 
+```
 [Web Crawler] --> [PostgreSQL: pages] --> Kafka --> [Chunker Service] --> PostgreSQL: chunks --> Kafka --> [Embedding Service] --> Qdrant
                                             ^
                                             |
                                    HTML cleaned + chunked
-
+```
 - **Crawler**: Fetches web pages and stores them in PostgreSQL, sending page IDs to Kafka.  
 - **Chunker**: Consumes page IDs, splits pages into chunks, stores them in PostgreSQL, and sends chunk IDs to Kafka.  
 - **Embedding Service**: Converts chunks into vector embeddings and stores them in Qdrant for search.  
