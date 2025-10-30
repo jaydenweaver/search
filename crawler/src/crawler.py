@@ -14,38 +14,43 @@ class Crawler:
         config_path = "config.yaml"
         self.config = Config(config_path)
 
-        self.db = Database(self.config.database)
+        
         self.producer = KafkaProducer(self.config.kafka)
 
         self.visited = set()
 
     def crawl(self):
         logger.info("Starting crawl.")
+        self.db = Database(self.config.database)
         to_visit = list(self.config.crawler.seed_urls)
 
-        while to_visit and len(self.visited) < self.config.crawler.max_pages:
-            url = to_visit.pop(0)
+        try:
+            while to_visit and len(self.visited) < self.config.crawler.max_pages:
+                url = to_visit.pop(0)
 
-            if url in self.visited:
-                continue
+                if url in self.visited:
+                    continue
 
-            try:
-                html = self.fetch(url)
-                if html:
-                    # send to db + kafka
-                    page_id = self.db.store_page(url, html)
-                    self.producer.send_page_id(page_id)
-                    self.visited.add(url)
-                    logger.info(f"Crawled {url} ({len(self.visited)} / {self.config.crawler.max_pages})")
+                try:
+                    html = self.fetch(url)
+                    if html:
+                        # send to db + kafka
+                        page_id = self.db.store_page(url, html)
+                        self.producer.send_page_id(page_id)
+                        self.visited.add(url)
+                        logger.info(f"Crawled {url} ({len(self.visited)} / {self.config.crawler.max_pages})")
 
-                    # find new links
-                    for link in self.extract_links(html, url):
-                        if link not in self.visited:
-                            to_visit.append(link)
-            except Exception as e:
-                logger.error(f"Failed to crawl {url}: {e}")
-            logger.info("Crawing complete.")
-            return list(self.visited)
+                        # find new links
+                        for link in self.extract_links(html, url):
+                            if link not in self.visited:
+                                to_visit.append(link)
+                except Exception as e:
+                    logger.error(f"Failed to crawl {url}: {e}")
+                    
+        finally:
+            self.db.close()
+        logger.info("Crawing complete.")
+        return list(self.visited)
 
 
     def fetch(self, url):
