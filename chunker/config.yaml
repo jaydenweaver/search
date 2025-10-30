@@ -1,0 +1,27 @@
+database:
+  host: "localhost"
+  port: 5432
+  name: "semantic_search"
+  user: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  group_id: "chunker_group"
+  topic_pages_to_chunk: "pages_to_chunk"
+  topic_chunks_to_embed: "chunks_to_embed"
+  enable_auto_commit: true
+  auto_offset_reset: "earliest"
+
+html:
+  chunk_size: 500
+  overlap: 50
+  min_chunk_length: 100
+  strip_scripts: true 
+  clean_whitespace: true 
+  include_metadata: true 
+
+worker:
+  batch_size: 10
+  retry_attempts: 3
+  retry_delay_seconds: 5 
