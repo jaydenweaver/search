@@ -101,7 +101,7 @@ python main.py --service embedder
 ## Configuration
 
 Example `config.yaml` snippet:
-
+```
 crawler:
   seed_urls:
     - "https://example.com"
@@ -128,7 +128,7 @@ chunk:
   strip_scripts: true
   clean_whitespace: true
   include_metadata: true
-
+```
 ---
 
 ## License
