@@ -1,5 +1,0 @@
-yaml
-requests
-bs4
-kafka
-psycopg2
