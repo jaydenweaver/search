@@ -1,0 +1,29 @@
+openai:
+  model: "text-embedding-3-small"
+  batch_size: 100
+  sleep_between_batches: 1
+
+supabase:
+  papers_table: "papers"
+
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "papers"
+  vector_size: 1536
+  distance_metric: "Cosine"
+
+dataset:
+  path: "arxiv_metadata.json"
+  id_field: "id"
+  abstract_field: "abstract"
+  authors_field: "authors_parsed"
+  categories_field: "categories"
+
+logging:
+  level: "INFO"
+  log_file: "batch_embedding.log"
+
+advanced:
+  retry_attempts: 3
+  max_parallel_requests: 5
