@@ -7,11 +7,8 @@ supabase:
   papers_table: "papers"
 
 qdrant:
-  host: "localhost"
-  port: 6333
   collection_name: "papers"
   vector_size: 1536
-  distance_metric: "Cosine"
 
 dataset:
   path: "data/arxiv-metadata-oai-snapshot.json"

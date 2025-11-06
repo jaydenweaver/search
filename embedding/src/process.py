@@ -7,8 +7,8 @@ from typing import List, Dict, Any
 from datetime import datetime
 
 from embedding import generate_embeddings_for_papers
-#from db import store_metadata_supabase
-#from vector import store_vectors_qdrant
+from db import store_metadata_supabase
+from vector import store_vectors_qdrant
 
 
 # load config.yaml
@@ -91,7 +91,7 @@ def process_batch(batch: List[Dict[str, Any]]):
 
     # store embeddings in qdrant
     try:
-        store_vectors_qdrant(embedding_results, config['qdrant'], config['dataset'])
+        store_vectors_qdrant(embedding_results, config['qdrant'])
     except Exception as e:
         logging.error(f"Failed storing vectors in Qdrant: {e}")
 
