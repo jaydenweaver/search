@@ -1,14 +1,14 @@
-# src/process.py
 import json
 import time
 import logging
 from pathlib import Path
 import yaml
 from typing import List, Dict, Any
+from datetime import datetime
 
-from .embedding import generate_embeddings
-from .db import store_metadata_supabase
-from .vector import store_vectors_qdrant
+#from embedding import generate_embeddings
+#from db import store_metadata_supabase
+#from vector import store_vectors_qdrant
 
 
 # load config.yaml
@@ -25,17 +25,48 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
+def is_after_year(paper, year):
+    try:
+        update_str = paper.get("update_date")
+        if not update_str:
+            return False
+        update_date = datetime.strptime(update_str, "%Y-%m-%d")
+        return update_date.year >= year
+    except Exception as e:
+        logging.warning(f"Invalid date for paper {paper.get('id', 'unknown')}: {e}")
+        return False
+
 def load_dataset(path: str) -> List[Dict[str, Any]]:
-    """ Load JSON dataset from file. """
+    """ Streams JSON dataset from file. """
     with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    logging.info(f"Loaded {len(data)} papers from dataset")
-    return data
+        for line_num, line in enumerate(f, start=1): # streams json lines to handle larger datasets
+            if line.strip(): # skip blanks
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Skipping invalid JSON at line {line_num}: {e}")
+
+def generate_batches(dataset_path, batch_size):
+    batch = []
+    for paper in load_dataset(dataset_path):
+        if "cs.LG" not in paper['categories'].split():
+            continue
+
+        if not is_after_year(paper, config['dataset']['from_year']):
+            continue
+
+        batch.append(paper)
+
+        if len(batch) >= batch_size:
+            yield batch
+            batch = []
+
+    if batch:
+        yield batch
 
 def process_batch(batch: List[Dict[str, Any]]):
     """ Process a single batch: embedding + DB + Qdrant. """
     abstracts = [p[config['dataset']['abstract_field']] for p in batch]
-    paper_ids = [p[config['dataset']['id_field']] for p in batch]
 
     # generate embeddings
     try:
@@ -56,7 +87,7 @@ def process_batch(batch: List[Dict[str, Any]]):
         except Exception as e:
             logging.error(f"Failed storing metadata for paper {p[config['dataset']['id_field']]}: {e}")
 
-    # store embeddings
+    # store embeddings in qdrant
     try:
         store_vectors_qdrant(batch, embeddings, config['qdrant'], config['dataset'])
     except Exception as e:
@@ -64,18 +95,20 @@ def process_batch(batch: List[Dict[str, Any]]):
 
 
 def run_pipeline():
-    dataset = load_dataset(config['dataset']['path'])
+    dataset_path = config['dataset']['path']
     batch_size = config['openai']['batch_size']
     sleep_time = config['openai'].get('sleep_between_batches', 1)
 
-    total = len(dataset)
-    logging.info(f"Starting pipeline for {total} papers with batch size {batch_size}")
+    logging.info(f"Starting streaming ingestion with batch size {batch_size}")
 
-    for i in range(0, total, batch_size):
-        batch = dataset[i:i + batch_size]
-        logging.info(f"Processing batch {i} to {i + len(batch)}")
-        process_batch(batch)
-        time.sleep(sleep_time)  # polite rate-limiting
+    total_processed = 0
 
-    logging.info("Pipeline completed successfully!")
+    for batch in generate_batches(dataset_path, batch_size):
+        total_processed += len(batch)
+        logging.info(f"Processing batch ending at paper {total_processed}")
+        # process_batch(batch)  # uncomment to process
+
+        time.sleep(sleep_time)  # rate limiting
+
+    logging.info(f"Data ingestion completed successfully. Total processed: {total_processed}")
 

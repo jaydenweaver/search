@@ -14,11 +14,12 @@ qdrant:
   distance_metric: "Cosine"
 
 dataset:
-  path: "arxiv_metadata.json"
+  path: "data/arxiv-metadata-oai-snapshot.json"
   id_field: "id"
   abstract_field: "abstract"
   authors_field: "authors_parsed"
   categories_field: "categories"
+  from_year: 2023
 
 logging:
   level: "INFO"
