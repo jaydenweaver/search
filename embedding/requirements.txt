@@ -1,1 +1,6 @@
 pyyaml
+tenacity
+openai
+qdrant-client
+supabase
+python-dotenv

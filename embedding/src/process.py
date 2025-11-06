@@ -6,7 +6,7 @@ import yaml
 from typing import List, Dict, Any
 from datetime import datetime
 
-#from embedding import generate_embeddings
+from embedding import generate_embeddings_for_papers
 #from db import store_metadata_supabase
 #from vector import store_vectors_qdrant
 
@@ -70,10 +70,12 @@ def process_batch(batch: List[Dict[str, Any]]):
 
     # generate embeddings
     try:
-        embeddings = generate_embeddings(
-            texts=abstracts,
+        embedding_results = generate_embeddings_for_papers(
+            papers=batch,
+            text_field=config['dataset']['abstract_field'],
+            id_field=config['dataset']['id_field'],
             model=config['openai']['model'],
-            batch_size=len(batch)  # embed batch at once
+            batch_size=len(batch)
         )
         logging.info(f"Generated embeddings for batch of {len(batch)} papers")
     except Exception as e:
@@ -89,7 +91,7 @@ def process_batch(batch: List[Dict[str, Any]]):
 
     # store embeddings in qdrant
     try:
-        store_vectors_qdrant(batch, embeddings, config['qdrant'], config['dataset'])
+        store_vectors_qdrant(embedding_results, config['qdrant'], config['dataset'])
     except Exception as e:
         logging.error(f"Failed storing vectors in Qdrant: {e}")
 
