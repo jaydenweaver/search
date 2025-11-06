@@ -1,5 +1,4 @@
 from src.process import run_pipeline
-import os
 from dotenv import load_dotenv
 
 load_env()

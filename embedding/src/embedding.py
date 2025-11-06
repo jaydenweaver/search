@@ -48,7 +48,6 @@ def generate_embeddings_for_papers(
             ]
             results.extend(batch_results)
             logging.info(f"Embedded batch {i // batch_size + 1}: {len(batch)} papers")
-            time.sleep(0.5)
         except Exception as e:
             logging.error(f"Embedding batch {i // batch_size + 1} failed: {e}")
             raise
