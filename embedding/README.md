@@ -113,7 +113,7 @@ python main.py
 ```
 
 2. **Pipeline workflow**
-   - Streams JSON dataset line by line.
+   - Streams JSONL dataset line by line.
    - Filter papers by category (`cs.LG`) and year (`from_year` in `config.yaml`).
    - Generate embeddings for abstracts using OpenAI API.
    - Store metadata in Supabase.
