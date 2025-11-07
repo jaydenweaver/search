@@ -9,6 +9,9 @@ supabase:
 qdrant:
   collection_name: "papers"
   vector_size: 1536
+  initial_sleep: 30
+  max_retries: 5
+  base_delay: 2.0
 
 dataset:
   path: "data/arxiv-metadata-oai-snapshot.json"
@@ -16,7 +19,7 @@ dataset:
   abstract_field: "abstract"
   authors_field: "authors_parsed"
   categories_field: "categories"
-  from_year: 2025
+  from_year: 2023
   checkpoint_path: checkpoint.txt
 
 logging:

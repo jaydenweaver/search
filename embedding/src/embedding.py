@@ -1,10 +1,15 @@
 import logging
 import time
+import os
 from typing import List, Dict, Any
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-client = OpenAI()
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY not found.")
+
+client = OpenAI(api_key=api_key)
 
 @retry( # retry if api call fails
     stop=stop_after_attempt(5),

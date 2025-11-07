@@ -7,9 +7,9 @@ from typing import List, Dict, Any
 from datetime import datetime
 from pathlib import Path
 
-#from .embedding import generate_embeddings_for_papers
+from .embedding import generate_embeddings_for_papers
 from .db import store_metadata_supabase
-#from .vector import store_vectors_qdrant
+from .vector import store_vectors_qdrant, recreate_qdrant_collection
 from .checkpoint import load_checkpoint, save_checkpoint
 
 
@@ -70,18 +70,18 @@ def process_batch(batch: List[Dict[str, Any]]):
     """ Process a single batch: embedding + DB + Qdrant. """
 
     # generate embeddings
-    #try:
-    #    embedding_results = generate_embeddings_for_papers(
-    #        papers=batch,
-    #        text_field=config['dataset']['abstract_field'],
-    #        id_field=config['dataset']['id_field'],
-    #        model=config['openai']['model'],
-    #        batch_size=len(batch)
-    #    )
-    #    logging.info(f"Generated embeddings for batch of {len(batch)} papers")
-    #except Exception as e:
-    #    logging.error(f"Failed embedding batch: {e}")
-    #    return
+    try:
+        embedding_results = generate_embeddings_for_papers(
+            papers=batch,
+            text_field=config['dataset']['abstract_field'],
+            id_field=config['dataset']['id_field'],
+            model=config['openai']['model'],
+            batch_size=len(batch)
+        )
+        logging.info(f"Generated embeddings for batch of {len(batch)} papers")
+    except Exception as e:
+        logging.error(f"Failed embedding batch: {e}")
+        return
 
     # store metadata in supabase
     try:
@@ -90,10 +90,10 @@ def process_batch(batch: List[Dict[str, Any]]):
         logging.error(f"Failed storing metadata for batch: {e}")
 
     # store embeddings in qdrant
-    #try:
-    #    store_vectors_qdrant(embedding_results, config['qdrant'])
-    #except Exception as e:
-    #    logging.error(f"Failed storing vectors in Qdrant: {e}")
+    try:
+        store_vectors_qdrant(embedding_results, config['qdrant'])
+    except Exception as e:
+        logging.error(f"Failed storing vectors in Qdrant: {e}")
 
 
 def run_pipeline():
@@ -104,6 +104,8 @@ def run_pipeline():
     
     last_processed = None
     total_processed = 0
+
+    recreate_qdrant_collection(config['qdrant']) # ensure qdrant collection is ready
 
     if checkpoint_path.exists():
         last_processed = load_checkpoint(checkpoint_path)
@@ -124,14 +126,11 @@ def run_pipeline():
 
         total_processed += len(batch)
         logging.info(f"Processing batch ending at paper {total_processed}")
-        process_batch(batch)  # uncomment to process
+        process_batch(batch) 
 
         # save checkpoint (last paper in batch)
         last_id = batch[-1]["id"]
         save_checkpoint(checkpoint_path, last_id)
-
-        if total_processed <= 100:
-            break
 
         time.sleep(sleep_time)  # rate limiting
 
