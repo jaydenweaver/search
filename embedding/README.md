@@ -133,7 +133,7 @@ python main.py
 
 ## Dependencies
 
-- Python 3.8+ (recommended 3.10+ for modern type hints)
+- Python 3.13
 - PyYAML
 - python-dotenv
 - openai
