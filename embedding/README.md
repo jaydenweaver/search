@@ -41,8 +41,11 @@ embedding/
 
 1. **Clone the repository**
 ```
-git clone <repo_url>
-cd embedding
+git clone git@github.com:jaydenweaver/search.git        # ssh
+# or
+git clone https://github.com/jaydenweaver/search.git    # https
+
+cd search/embedding
 ```
 
 2. **Create a virtual environment**
