@@ -17,6 +17,7 @@ dataset:
   authors_field: "authors_parsed"
   categories_field: "categories"
   from_year: 2023
+  checkpoint_path: checkpoint.txt
 
 logging:
   level: "INFO"

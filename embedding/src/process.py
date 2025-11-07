@@ -5,10 +5,12 @@ from pathlib import Path
 import yaml
 from typing import List, Dict, Any
 from datetime import datetime
+from pathlib import Path
 
-from embedding import generate_embeddings_for_papers
-from db import store_metadata_supabase
-from vector import store_vectors_qdrant
+#from .embedding import generate_embeddings_for_papers
+#from .db import store_metadata_supabase
+#from .vector import store_vectors_qdrant
+from .checkpoint import load_checkpoint, save_checkpoint
 
 
 # load config.yaml
@@ -100,17 +102,42 @@ def run_pipeline():
     dataset_path = config['dataset']['path']
     batch_size = config['openai']['batch_size']
     sleep_time = config['openai'].get('sleep_between_batches', 1)
+    checkpoint_path = Path(config['dataset'].get('checkpoint_path', 'checkpoint.txt'))
+    
+    last_processed = None
+    total_processed = 0
+
+    if checkpoint_path.exists():
+        last_processed = load_checkpoint(checkpoint_path)
+        logging.info(f"Resuming from checkpoint: {last_processed}")
+    else:
+        checkpoint_path.touch()
+        logging.info("No checkpoint found. Starting from scratch.")
 
     logging.info(f"Starting streaming ingestion with batch size {batch_size}")
 
-    total_processed = 0
-
     for batch in generate_batches(dataset_path, batch_size):
+        if last_processed:
+            # skip all papers up to (and including) last_processed
+            if batch[-1]["id"] <= last_processed:
+                continue
+            else:
+                last_processed = None  # start normal processing after skip
+
         total_processed += len(batch)
         logging.info(f"Processing batch ending at paper {total_processed}")
         # process_batch(batch)  # uncomment to process
 
+        # save checkpoint (last paper in batch)
+        last_id = batch[-1]["id"]
+        save_checkpoint(checkpoint_path, last_id)
+
+
         time.sleep(sleep_time)  # rate limiting
+
+    if checkpoint_path.exists():
+        checkpoint_path.unlink()
+        logging.info("Checkpoint cleared after successful completion.")
 
     logging.info(f"Data ingestion completed successfully. Total processed: {total_processed}")
 
