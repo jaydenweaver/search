@@ -113,7 +113,7 @@ python main.py
 ```
 
 2. **Pipeline workflow**
-   - Load JSON dataset line by line.
+   - Streams JSON dataset line by line.
    - Filter papers by category (`cs.LG`) and year (`from_year` in `config.yaml`).
    - Generate embeddings for abstracts using OpenAI API.
    - Store metadata in Supabase.
@@ -126,7 +126,6 @@ python main.py
 
 ## Notes
 
-- For large datasets, it is recommended to use ```streaming ingestion``` with batches to avoid memory issues.
 - Adjust ```batch_size``` and ```sleep_between_batches``` to stay within OpenAI API rate limits.
 - Only papers in the specified category and after the specified year are processed.
 
