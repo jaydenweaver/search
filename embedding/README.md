@@ -24,6 +24,8 @@ embedding/
 ├─ config.yaml             # Configuration file
 ├─ requirements.txt        # Python dependencies
 ├─ .env                    # Environment variables (API keys, URLs)
+├─ data/
+│   └─ dataset.jsonl       # JSONL dataset of papers
 └─ src/
    ├─ __init__.py
    ├─ process.py           # Main pipeline logic
