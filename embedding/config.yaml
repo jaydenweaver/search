@@ -29,3 +29,4 @@ logging:
 advanced:
   retry_attempts: 3
   max_parallel_requests: 5
+  max_workers: 4
