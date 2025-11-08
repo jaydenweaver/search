@@ -1,6 +1,7 @@
 import json
 import time
 import logging
+import random
 from pathlib import Path
 import yaml
 from typing import List, Dict, Any
@@ -19,9 +20,6 @@ CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     config = yaml.safe_load(f)
 
-# global thread pool
-EXECUTOR = ThreadPoolExecutor(max_workers=config["advanced"].get("max_workers", 4))
-
 # initialise logger
 log_file = config["logging"].get("log_file", "batch_embedding.log")
 logging.basicConfig(
@@ -36,6 +34,32 @@ console.setLevel(logging.INFO)
 logging.getLogger().addHandler(console)
 
 # helper funcs
+async def with_backoff(func, *args, retries=3, base_delay=2.0, **kwargs):
+    """ Retries async or sync functions with exponential backoff and jitter. """
+    kwargs.pop("retries", None)
+    kwargs.pop("base_delay", None)
+
+    for i in range(retries):
+        try:
+            # handles both async and sync functions
+            if asyncio.iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                return await asyncio.to_thread(func, *args, **kwargs)
+        except Exception as e:
+            if "429" in str(e) or "rate limit" in str(e).lower():
+                if i < retries - 1:
+                    delay = base_delay * (2 ** i) + random.random()
+                    logging.warning(f"Rate limit hit. Retrying in {delay:.2f}s...")
+                    await asyncio.sleep(delay)
+                    continue
+            elif i < retries - 1 and "timeout" in str(e).lower():
+                delay = base_delay * (2 ** i) + random.random()
+                logging.warning(f"Timeout. Retrying in {delay:.2f}s...")
+                await asyncio.sleep(delay)
+                continue
+            raise
+
 def is_after_year(paper, year):
     try:
         update_str = paper.get("update_date")
@@ -78,29 +102,31 @@ def generate_batches(dataset_path, batch_size):
 
 async def process_batch(batch: List[Dict[str, Any]]):
     """Process a single batch asynchronously: embedding + DB + Qdrant."""
-    loop = asyncio.get_running_loop()
-    embedding_results = None
+    retries = config["advanced"].get("retries", 3)
+    base_delay = config["advanced"].get("base_delay", 2.0)
 
     try:
-        embedding_results = await loop.run_in_executor(
-            EXECUTOR,
+        embedding_results = await with_backoff(
             generate_embeddings_for_papers,
             batch,
             config["dataset"]["abstract_field"],
             config["dataset"]["id_field"],
             config["openai"]["model"],
-            len(batch),
+            len(batch), 
+            retries=retries, 
+            base_delay=base_delay
         )
         logging.info(f"Generated embeddings for batch of {len(batch)} papers")
     except Exception as e:
-        logging.error(f"Failed embedding batch: {e}")
+        last_id = batch[-1]["id"]
+        logging.error(f"Failed embedding batch ending at ID {last_id}: {e}")
         return
 
     async def store_metadata():
-        await loop.run_in_executor(EXECUTOR, store_metadata_supabase, batch, config["supabase"])
+        await with_backoff(store_metadata_supabase, batch, config["supabase"], retries=retries, base_delay=base_delay)
 
     async def store_vectors():
-        await loop.run_in_executor(EXECUTOR, store_vectors_qdrant, embedding_results, config["qdrant"])
+        await with_backoff(store_vectors_qdrant, embedding_results, config["qdrant"], retries=retries, base_delay=base_delay)
 
     await asyncio.gather(store_metadata(), store_vectors())
 
@@ -131,6 +157,8 @@ async def run_pipeline_async(dataset_path, batch_size, checkpoint_path, sleep_ti
 
 
 def run_pipeline():
+    start_time = time.time()
+
     dataset_path = config["dataset"]["path"]
     batch_size = config["openai"]["batch_size"]
     sleep_time = config["openai"].get("sleep_between_batches", 1)
@@ -153,5 +181,7 @@ def run_pipeline():
     except KeyboardInterrupt:
         logging.warning("Pipeline interrupted by user.")
     finally:
-        EXECUTOR.shutdown(wait=True)
         logging.info("Thread pool shut down.")
+    
+    duration = time.time() - start_time
+    logging.info(f"Pipeline finished in {duration/60:.1f} min")

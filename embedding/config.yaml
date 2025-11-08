@@ -10,9 +10,7 @@ qdrant:
   collection_name: "papers"
   vector_size: 1536
   initial_sleep: 30
-  max_retries: 5
-  base_delay: 2.0
-
+  
 dataset:
   path: "data/arxiv-metadata-oai-snapshot.json"
   id_field: "id"
@@ -27,6 +25,6 @@ logging:
   log_file: "batch_embedding.log"
 
 advanced:
-  retry_attempts: 3
-  max_parallel_requests: 5
+  max_retries: 5
+  base_delay: 2.0
   max_workers: 4
