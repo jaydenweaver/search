@@ -13,19 +13,27 @@ client = QdrantClient(url=url, api_key=api_key)
 
 def recreate_qdrant_collection(config: Dict[str, Any]):
     collection_name = config.get("collection_name", "papers")
-    vector_size = config.get("vector_size")  # must match embedding dimension
-    sleep_time = config.get("initial_sleep")
+    vector_size = config.get("vector_size")
+    sleep_time = config.get("initial_sleep", 10)
 
     try:
-        client.recreate_collection(
-            collection_name=collection_name,
-            vectors_config=models.VectorParams(size=vector_size, distance=models.Distance.COSINE),
-        )
-        logging.info(f"Ensured collection '{collection_name}' exists with size {vector_size}")
+        # check if collection exists
+        existing_collections = [c.name for c in client.get_collections().collections]
+        if collection_name in existing_collections:
+            logging.info(f"Collection '{collection_name}' already exists. Skipping recreation.")
+            return
+        else:
+            # create collection if missing
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=models.VectorParams(size=vector_size, distance=models.Distance.COSINE),
+            )
+            logging.info(f"Created new collection '{collection_name}' with vector size {vector_size}")
     except Exception as e:
-        logging.warning(f"Could not create collection '{collection_name}' (maybe exists): {e}")
+        logging.error(f"Error ensuring collection '{collection_name}': {e}")
+        return
 
-    logging.info(f"Sleeping for {sleep_time} seconds to ensure qdrant collection is ready for upsert...")
+    logging.info(f"Sleeping for {sleep_time} seconds to ensure Qdrant collection is ready...")
     time.sleep(sleep_time)
 
 
