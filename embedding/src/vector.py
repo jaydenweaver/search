@@ -11,7 +11,7 @@ api_key = os.getenv("QDRANT_API_KEY")
 
 client = QdrantClient(url=url, api_key=api_key)
 
-def recreate_qdrant_collection(config: Dict[str, Any]):
+def check_qdrant_collection(config: Dict[str, Any]):
     collection_name = config.get("collection_name", "papers")
     vector_size = config.get("vector_size")
     sleep_time = config.get("initial_sleep", 10)

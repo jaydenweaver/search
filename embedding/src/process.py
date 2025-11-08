@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .embedding import generate_embeddings_for_papers
 from .db import store_metadata_supabase
-from .vector import store_vectors_qdrant, recreate_qdrant_collection
+from .vector import store_vectors_qdrant, check_qdrant_collection
 from .checkpoint import load_checkpoint, save_checkpoint
 
 
@@ -105,7 +105,7 @@ def run_pipeline():
     last_processed = None
     total_processed = 0
 
-    recreate_qdrant_collection(config['qdrant']) # ensure qdrant collection is ready
+    check_qdrant_collection(config['qdrant']) # ensure qdrant collection is ready
 
     if checkpoint_path.exists():
         last_processed = load_checkpoint(checkpoint_path)
