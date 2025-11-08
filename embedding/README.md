@@ -1,17 +1,19 @@
 # Academic Paper Embedding Module
 
-This project provides a pipeline to process academic papers from arXiv, generate vector embeddings from their abstracts, and store the results in a vector database (Qdrant) with metadata in Supabase. The pipeline is designed to handle large datasets efficiently with streaming, batching, and checkpointing support.
+This project provides a robust pipeline to process academic papers from arXiv, generate vector embeddings from their abstracts, and store the results in a vector database (Qdrant) with metadata in Supabase. The pipeline supports **large datasets**, **streaming**, **batching**, **checkpointing**, and **rate-limited async processing**.
 
 ---
 
 ## Features
 
-- ```Streaming ingestion```: Processes large JSON datasets line by line to avoid memory issues.
-- ```Batch embedding```: Uses OpenAI embeddings API to vectorize abstracts in batches.
-- ```Metadata storage```: Stores paper metadata in Supabase for easy querying.
-- ```Vector storage```: Stores embeddings in Qdrant for semantic search.
-- ```Filtering```: Supports filtering by categories (e.g., `cs.LG`) and publication year.
-- ```Checkpointing```: Supports resuming long-running processes from the last processed paper.
+- ```Streaming ingestion```: Processes large JSON datasets line by line to avoid memory issues.  
+- ```Batch embedding```: Generates embeddings in batches using OpenAI embeddings API.  
+- ```Metadata storage```: Saves paper metadata in Supabase for easy querying.  
+- ```Vector storage```: Stores embeddings in Qdrant for semantic search.  
+- ```Filtering```: Supports filtering by category (e.g., `cs.LG`) and publication year.  
+- ```Checkpointing```: Resumes long-running processes from the last processed paper.  
+- ```Async processing with backoff```: Retries API calls with exponential backoff and jitter on rate limits or timeouts.  
+- ```Thread-safe sync execution```: Synchronous functions run asynchronously using `asyncio.to_thread()` for better concurrency.  
 
 ---
 
@@ -73,7 +75,8 @@ QDRANT_API_KEY=<your_qdrant_api_key>
 ```
 
 5. **Configure `config.yaml`**  
-Set dataset paths, batch sizes, and other options. Example:
+
+Your configuration file should include dataset paths, API models, batch size, and retry/backoff settings. Example:
 
 ```
 openai:
@@ -87,7 +90,8 @@ supabase:
 qdrant:
   collection_name: "papers"
   vector_size: 1536
-
+  initial_sleep: 30
+  
 dataset:
   path: "data/arxiv-metadata-oai-snapshot.json"
   id_field: "id"
@@ -102,8 +106,9 @@ logging:
   log_file: "batch_embedding.log"
 
 advanced:
-  retry_attempts: 3
-  max_parallel_requests: 5
+  max_retries: 5
+  base_delay: 2.0
+  max_workers: 4
 ```
 
 ---
@@ -115,34 +120,40 @@ advanced:
 python main.py
 ```
 
-2. **Pipeline workflow**
-   - Streams JSONL dataset line by line.
-   - Filter papers by category (`cs.LG`) and year (`from_year` in `config.yaml`).
-   - Generate embeddings for abstracts using OpenAI API.
-   - Store metadata in Supabase.
-   - Store embeddings in Qdrant.
+2. **Pipeline workflow**  
+   - Streams the JSONL dataset line by line.  
+   - Filters papers by category (`cs.LG`) and year (`from_year` in `config.yaml`).  
+   - Generates embeddings for abstracts using OpenAI API with **async backoff** for rate limiting.  
+   - Stores metadata in Supabase.  
+   - Stores embeddings in Qdrant.  
+   - Saves progress via **checkpointing**, allowing resuming if interrupted.  
 
 3. **Checkpointing**  
-   - The pipeline supports checkpointing for long runs. If interrupted, it resumes from the last processed paper.
+   - The pipeline writes the last processed paper ID to a checkpoint file.  
+   - On restart, it resumes from the last checkpoint automatically.  
+
+4. **Rate-limiting**  
+   - The pipeline respects OpenAI API limits using `sleep_between_batches` and exponential backoff with jitter.  
 
 ---
 
 ## Notes
 
-- Adjust ```batch_size``` and ```sleep_between_batches``` to stay within OpenAI API rate limits.
-- Only papers in the specified category and after the specified year are processed.
+- Adjust `batch_size` and `sleep_between_batches` in `config.yaml` to stay within OpenAI API rate limits.  
+- Only papers matching the specified category and year are processed.  
+- Async-safe execution ensures synchronous functions do not block the event loop.  
 
 ---
 
 ## Dependencies
 
-- Python 3.13
-- PyYAML
-- python-dotenv
-- openai
-- qdrant-client
-- supabase
-- tenacity
+- Python 3.13  
+- PyYAML  
+- python-dotenv  
+- openai  
+- qdrant-client  
+- supabase  
+- tenacity  
 
 ---
 
