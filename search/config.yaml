@@ -1,0 +1,5 @@
+openai:
+  model: "text-embedding-3-small"
+
+qdrant:
+  collection_name: "papers"
