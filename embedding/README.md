@@ -53,9 +53,9 @@ cd search/embedding
 2. **Create a virtual environment**
 ```
 python -m venv venv
-.\venv\Scripts\Activate.ps1   # Windows PowerShell
+.\venv\Scripts\Activate.ps1   # windows
 # or
-source venv/bin/activate      # macOS/Linux
+source venv/bin/activate      # macOS / linux
 ```
 
 3. **Install dependencies**
