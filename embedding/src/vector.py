@@ -39,13 +39,11 @@ def check_qdrant_collection(config: Dict[str, Any]):
 
 def store_vectors_qdrant(embedding_results: List[Dict[str, Any]], config: Dict[str, Any]):
     """
-    Stores paper embeddings in a qdrant collection with automatic retries.
+    Stores paper embeddings in a qdrant collection.
 
     Args:
         embedding_results: List[Dict[str, Any]] with fields {"id": str, "embedding": List[float]}
         config: Dict[str, Any] from config.yaml or .env
-        max_retries: Maximum number of retry attempts
-        base_delay: Initial delay in seconds for exponential backoff
     """
     collection_name = config.get("collection_name", "papers")
     
@@ -59,22 +57,14 @@ def store_vectors_qdrant(embedding_results: List[Dict[str, Any]], config: Dict[s
             payload={"paper_id": pid}
         ))
 
-    max_retries = config["max_retries"]
-    base_delay = config["base_delay"]
-    attempt = 0
-    while attempt < max_retries:
-        try:
-            client.upsert(
-                collection_name=collection_name,
-                points=points,
-            )
-            logging.info(f"Successfully inserted {len(points)} vectors into '{collection_name}'")
-            return  # success, exit the function
-        except Exception as e:
-            attempt += 1
-            delay = base_delay * (2 ** (attempt - 1))  # exponential backoff
-            logging.warning(f"Attempt {attempt}/{max_retries} failed to upsert vectors: {e}. Retrying in {delay:.1f}s...")
-            time.sleep(delay)
+    try:
+        client.upsert(
+            collection_name=collection_name,
+            points=points,
+        )
+        logging.info(f"Successfully inserted {len(points)} vectors into '{collection_name}'")
+    except Exception as e:
+        logging.error(f"Failed to upsert vectors.")
 
-    logging.error(f"Failed to upsert vectors after {max_retries} attempts.")
+    
 
