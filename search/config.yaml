@@ -3,3 +3,6 @@ openai:
 
 qdrant:
   collection_name: "papers"
+
+supabase:
+  papers_table: "papers"
