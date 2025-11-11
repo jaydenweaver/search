@@ -90,15 +90,15 @@ async def search_papers(query: str = Query(..., min_length=3, description="Searc
 
         metadata_list = await asyncio.to_thread(fetch_metadata, paper_ids)
 
-        metadata_hash = {p["id"]: p for p in metadata_list}
+        metadata_map = {p["id"]: p for p in metadata_list}
 
         # merge results
         combined_results = []
         for res in results:
             pid = res.payload.get("paper_id")
-            if not pid or pid not in metadata_hash:
+            if not pid or pid not in metadata_map:
                 continue
-            meta = metadata_hash[pid]
+            meta = metadata_map[pid]
             combined_results.append(
                 SearchResult(
                     id=pid,
