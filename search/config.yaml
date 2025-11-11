@@ -6,3 +6,6 @@ qdrant:
 
 supabase:
   papers_table: "papers"
+
+max_retries: 3
+base_delay: 2.0

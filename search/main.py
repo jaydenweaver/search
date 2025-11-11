@@ -3,11 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
 from qdrant_client import QdrantClient
-from openai import AsyncOpenAI
+from qdrant_client.http.exceptions import UnexpectedResponse
+from openai import AsyncOpenAI, APIError, RateLimitError, ServiceUnavailableError
 import os
 import yaml
 from dotenv import load_dotenv
 import asyncio
+import time
+import inspect
+import random
+import httpx
 
 load_dotenv()
 
@@ -38,6 +43,17 @@ supabase = create_client(
     os.getenv("SUPABASE_SERVICE_KEY")
 )
 
+retry_exceptions = (
+        TimeoutError,
+        ConnectionError,
+        httpx.ConnectError,
+        httpx.ReadTimeout,
+        APIError,
+        RateLimitError,
+        ServiceUnavailableError,
+        UnexpectedResponse,
+    )
+
 class SearchResult(BaseModel):
     id: str
     title: str
@@ -62,12 +78,33 @@ def fetch_metadata(paper_ids):
     except Exception as e:
         print(f"[ERROR] Failed to fetch metadata from Supabase: {e}")
         return []
+    
+async def retry_async(func, *args, **kwargs):
+    max_retries = config.get("max_retries", 3)
+    base_delay = config.get("base_delay", 0.5)
+
+    for attempt in range(max_retries):
+        try:
+            if inspect.iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                # run sync functions in a thread pool to avoid blocking
+                return await asyncio.to_thread(func, *args, **kwargs)
+        except Exception as e:
+            if attempt == max_retries - 1 or not isinstance(e, retry_exceptions) :
+                raise  # bubble up final exception and logic errors
+
+            # exponential backoff + jitter
+            delay = base_delay * (2 ** attempt) + random.uniform(0, 0.1)
+            print(f"[WARN] Attempt {attempt+1}/{max_retries} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s...")
+            await asyncio.sleep(delay)
 
 @app.get("/search", response_model=list[SearchResult])
 async def search_papers(query: str = Query(..., min_length=3, description="Search query")):
     try:
         # generate embedding from query
-        response = await openai_client.embeddings.create(
+        response = await retry_async(
+            openai_client.embeddings.create,
             model=config["openai"]["model"],
             input=query
         )
@@ -75,7 +112,8 @@ async def search_papers(query: str = Query(..., min_length=3, description="Searc
 
 
         # qdrant search
-        results = qdrant.search(
+        results = await retry_async(
+            qdrant.search,
             collection_name=config["qdrant"]["collection_name"],
             query_vector=vector,
             limit=10,
@@ -88,7 +126,7 @@ async def search_papers(query: str = Query(..., min_length=3, description="Searc
         if not paper_ids:
             return []
 
-        metadata_list = await asyncio.to_thread(fetch_metadata, paper_ids)
+        metadata_list = await retry_async(fetch_metadata, paper_ids)
 
         metadata_map = {p["id"]: p for p in metadata_list}
 
