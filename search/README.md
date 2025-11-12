@@ -43,8 +43,8 @@ cd search
 
 ```
 python -m venv venv
-source venv/bin/activate      # Linux / macOS
-venv\Scripts\activate         # Windows
+source venv/bin/activate      # linux / macOS
+venv\Scripts\activate         # windows
 ```
 
 3. **Install dependencies**
@@ -85,7 +85,7 @@ supabase:
 Start the FastAPI server using Uvicorn:
 
 ```
-uvicorn search.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 ```
 
 - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)  
