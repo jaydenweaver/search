@@ -1,6 +1,6 @@
 # Paperfind API
 
-Paperfind API is a FastAPI-based search service for academic papers. It generates embeddings for user queries using OpenAI, searches a Qdrant vector database for relevant papers, and fetches metadata from Supabase. The API is designed with robust error handling, retries, and rate-limit handling.
+Paperfind API is a FastAPI search service for academic papers. It generates embeddings for user queries using OpenAI, searches a Qdrant vector database for relevant papers, and fetches metadata from Supabase. The API is designed with robust error handling, retries, and rate-limit handling.
 
 ---
 
