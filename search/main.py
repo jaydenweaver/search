@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from supabase import create_client, Client
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
 from openai import AsyncOpenAI, APIError, RateLimitError
@@ -14,6 +13,7 @@ import asyncio
 import inspect
 import random
 import httpx
+import time
 
 load_dotenv()
 
@@ -40,10 +40,9 @@ qdrant = QdrantClient(
     api_key=os.getenv("QDRANT_API_KEY")
 )
 
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
-)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+TABLE_NAME = config["supabase"]["papers_table"]
 
 retry_exceptions = (
         TimeoutError,
@@ -63,22 +62,22 @@ class SearchResult(BaseModel):
     score: float
 
 # fetch metadata from supabase
-def fetch_metadata(paper_ids):
-    try:
-        response = (
-            supabase.table(config["supabase"]["papers_table"])
-            .select("id, title, authors, abstract")
-            .in_("id", paper_ids)
-            .execute()
-        )
-        data = response.data or []
-        if not data:
-            print(f"[WARN] No metadata found for paper IDs: {paper_ids}")
-        return data
+async def fetch_metadata(paper_ids):
+    ids_filter = ",".join(paper_ids)
+    url = f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?id=in.({ids_filter})&select=id,title,authors,abstract"
 
-    except Exception as e:
-        print(f"[ERROR] Failed to fetch metadata from Supabase: {e}")
-        raise ExternalServiceError(f"Failed to fetch metadata: {e}")
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, headers=headers, timeout=10.0)
+        resp.raise_for_status()
+        data = resp.json()
+        return data
     
 async def retry_async(func, *args, **kwargs):
     max_retries = config.get("max_retries", 3)
@@ -106,16 +105,20 @@ async def retry_async(func, *args, **kwargs):
 
 @app.get("/search", response_model=list[SearchResult])
 async def search_papers(query: str = Query(..., min_length=3, description="Search query")):
-    # generate embedding from query
+    start_total = time.time()
+
+    # openai embedding
+    start_openai = time.time()
     response = await retry_async(
         openai_client.embeddings.create,
         model=config["openai"]["model"],
         input=query
     )
     vector = response.data[0].embedding
-
+    openai_time = time.time() - start_openai
 
     # qdrant search
+    start_qdrant = time.time()
     results = await retry_async(
         qdrant.search,
         collection_name=config["qdrant"]["collection_name"],
@@ -123,14 +126,20 @@ async def search_papers(query: str = Query(..., min_length=3, description="Searc
         limit=10,
         with_payload=True
     )
+    qdrant_time = time.time() - start_qdrant
 
-    # get paper id's
+    # get paper ids
     paper_ids = [res.payload.get("paper_id") for res in results if res.payload.get("paper_id")]
 
     if not paper_ids:
+        total_time = time.time() - start_total
+        print(f"[TIMING] OpenAI: {openai_time:.2f}s, Qdrant: {qdrant_time:.2f}s, Metadata: 0.00s, Total: {total_time:.2f}s")
         raise NotFoundError("No papers found for this query.")
 
+    # fetch metadata
+    start_supabase = time.time()
     metadata_list = await retry_async(fetch_metadata, paper_ids)
+    supabase_time = time.time() - start_supabase
 
     metadata_map = {p["id"]: p for p in metadata_list}
 
@@ -150,5 +159,8 @@ async def search_papers(query: str = Query(..., min_length=3, description="Searc
                 score=res.score
             )
         )
+
+    total_time = time.time() - start_total
+    print(f"[TIMING] OpenAI: {openai_time:.2f}s, Qdrant: {qdrant_time:.2f}s, Metadata: {supabase_time:.2f}s, Total: {total_time:.2f}s")
 
     return combined_results
