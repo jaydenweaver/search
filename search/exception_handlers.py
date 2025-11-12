@@ -1,9 +1,9 @@
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from openai import RateLimitError, APIError, ServiceUnavailableError
+from openai import RateLimitError, APIError
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-from .exceptions import AppError
+from exceptions import AppError
 
 def register_exception_handlers(app):
     @app.exception_handler(AppError)
@@ -21,7 +21,6 @@ def register_exception_handlers(app):
         )
 
     @app.exception_handler(APIError)
-    @app.exception_handler(ServiceUnavailableError)
     @app.exception_handler(UnexpectedResponse)
     async def handle_external_errors(request: Request, exc: Exception):
         return JSONResponse(

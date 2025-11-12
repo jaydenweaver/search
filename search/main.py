@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
-from openai import AsyncOpenAI, APIError, RateLimitError, ServiceUnavailableError
-from .exception_handlers import register_exception_handlers
-from .exceptions import ExternalServiceError, RateLimitExceeded, NotFoundError
+from openai import AsyncOpenAI, APIError, RateLimitError
+from exception_handlers import register_exception_handlers
+from exceptions import ExternalServiceError, RateLimitExceeded, NotFoundError
 import os
 import yaml
 from dotenv import load_dotenv
@@ -53,7 +53,6 @@ retry_exceptions = (
         httpx.ReadTimeout,
         APIError,
         RateLimitError,
-        ServiceUnavailableError,
         UnexpectedResponse,
     )
 
