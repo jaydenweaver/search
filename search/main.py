@@ -5,6 +5,8 @@ from supabase import create_client, Client
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
 from openai import AsyncOpenAI, APIError, RateLimitError, ServiceUnavailableError
+from .exception_handlers import register_exception_handlers
+from .exceptions import ExternalServiceError, RateLimitExceeded, NotFoundError
 import os
 import yaml
 from dotenv import load_dotenv
@@ -23,6 +25,7 @@ with open("config.yaml", "r") as f:
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI(title="Paperfind API")
+register_exception_handlers(app)
 
 # cors
 app.add_middleware(
@@ -77,7 +80,7 @@ def fetch_metadata(paper_ids):
 
     except Exception as e:
         print(f"[ERROR] Failed to fetch metadata from Supabase: {e}")
-        return []
+        raise ExternalServiceError(f"Failed to fetch metadata: {e}")
     
 async def retry_async(func, *args, **kwargs):
     max_retries = config.get("max_retries", 3)
@@ -90,9 +93,13 @@ async def retry_async(func, *args, **kwargs):
             else:
                 # run sync functions in a thread pool to avoid blocking
                 return await asyncio.to_thread(func, *args, **kwargs)
+            
+        except RateLimitError as e:
+            raise RateLimitExceeded(str(e)) from e
+        
         except Exception as e:
             if attempt == max_retries - 1 or not isinstance(e, retry_exceptions) :
-                raise  # bubble up final exception and logic errors
+                raise ExternalServiceError(f"{func.__name__} failed after {max_retries} retries: {e}") from e
 
             # exponential backoff + jitter
             delay = base_delay * (2 ** attempt) + random.uniform(0, 0.1)
@@ -101,53 +108,49 @@ async def retry_async(func, *args, **kwargs):
 
 @app.get("/search", response_model=list[SearchResult])
 async def search_papers(query: str = Query(..., min_length=3, description="Search query")):
-    try:
-        # generate embedding from query
-        response = await retry_async(
-            openai_client.embeddings.create,
-            model=config["openai"]["model"],
-            input=query
-        )
-        vector = response.data[0].embedding
+    # generate embedding from query
+    response = await retry_async(
+        openai_client.embeddings.create,
+        model=config["openai"]["model"],
+        input=query
+    )
+    vector = response.data[0].embedding
 
 
-        # qdrant search
-        results = await retry_async(
-            qdrant.search,
-            collection_name=config["qdrant"]["collection_name"],
-            query_vector=vector,
-            limit=10,
-            with_payload=True
-        )
+    # qdrant search
+    results = await retry_async(
+        qdrant.search,
+        collection_name=config["qdrant"]["collection_name"],
+        query_vector=vector,
+        limit=10,
+        with_payload=True
+    )
 
-        # get paper id's
-        paper_ids = [res.payload.get("paper_id") for res in results if res.payload.get("paper_id")]
+    # get paper id's
+    paper_ids = [res.payload.get("paper_id") for res in results if res.payload.get("paper_id")]
 
-        if not paper_ids:
-            return []
+    if not paper_ids:
+        raise NotFoundError("No papers found for this query.")
 
-        metadata_list = await retry_async(fetch_metadata, paper_ids)
+    metadata_list = await retry_async(fetch_metadata, paper_ids)
 
-        metadata_map = {p["id"]: p for p in metadata_list}
+    metadata_map = {p["id"]: p for p in metadata_list}
 
-        # merge results
-        combined_results = []
-        for res in results:
-            pid = res.payload.get("paper_id")
-            if not pid or pid not in metadata_map:
-                continue
-            meta = metadata_map[pid]
-            combined_results.append(
-                SearchResult(
-                    id=pid,
-                    title=meta.get("title", ""),
-                    authors=meta.get("authors", ""),
-                    abstract=meta.get("abstract", ""),
-                    score=res.score
-                )
+    # merge results
+    combined_results = []
+    for res in results:
+        pid = res.payload.get("paper_id")
+        if not pid or pid not in metadata_map:
+            continue
+        meta = metadata_map[pid]
+        combined_results.append(
+            SearchResult(
+                id=pid,
+                title=meta.get("title", ""),
+                authors=meta.get("authors", ""),
+                abstract=meta.get("abstract", ""),
+                score=res.score
             )
+        )
 
-        return combined_results
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return combined_results
