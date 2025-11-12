@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState } from 'react';
+import { searchPapers } from './services/searchService';
 
 function App() {
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Searching for:", query)
-    // Call your API here
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = await searchPapers(query);
+    setResults(data);
+    console.log(data);
   }
 
   return (
@@ -36,4 +39,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
