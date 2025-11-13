@@ -17,7 +17,6 @@ function ResultsPage() {
   const authorsLen = 100;
 
   if (!state?.results) {
-    // Redirect back if user refreshed or navigated directly
     navigate('/');
     return null;
   }
