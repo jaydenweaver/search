@@ -78,23 +78,9 @@ h1 {
   border-color: #ffffff; 
 }
 
-.search-form button {
-  border: 1px solid #333;
-  border-radius: 9999px;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-.search-form button:hover {
-  border-color: #ffffff;
-}
-.search-form button:focus,
-.search-form button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (prefers-color-scheme: light) {
