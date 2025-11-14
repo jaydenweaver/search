@@ -102,7 +102,7 @@ async def perform_search(query: str) -> list[SearchResult]:
 
     start_total = time.time()
 
-    # OpenAI embeddings
+    # embeddings
     start_openai = time.time()
     response = await retry_async(
         openai_client.embeddings.create,
@@ -112,7 +112,7 @@ async def perform_search(query: str) -> list[SearchResult]:
     vector = response.data[0].embedding
     openai_time = time.time() - start_openai
 
-    # Qdrant search
+    # qdrant search
     start_qdrant = time.time()
     results = await retry_async(
         qdrant.search,
@@ -130,7 +130,7 @@ async def perform_search(query: str) -> list[SearchResult]:
         print(f"[TIMING] OpenAI: {openai_time:.2f}s, Qdrant: {qdrant_time:.2f}s, Metadata: 0.00s, Total: {total_time:.2f}s")
         raise NotFoundError("No papers found for this query.")
 
-    # Fetch metadata
+    # fetch metadata
     start_supabase = time.time()
     metadata_list = await retry_async(fetch_metadata, paper_ids)
     supabase_time = time.time() - start_supabase
