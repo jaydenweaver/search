@@ -15,8 +15,6 @@ import random
 import httpx
 import time
 
-load_dotenv()
-
 # load config
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
