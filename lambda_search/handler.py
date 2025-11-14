@@ -1,4 +1,3 @@
-# lambda_handler.py
 import os
 import json
 import yaml
