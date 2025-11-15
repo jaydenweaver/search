@@ -25,7 +25,7 @@ Paperfind.io provides fast, meaning-aware retrieval of research papers using vec
 Handles the end-to-end process of preparing academic papers for semantic search:
 - JSONL extraction (id, title, authors, abstract, categories)
 - Embedding generation using OpenAI
-- Uploading chunks + metadata to Qdrant / PostgreSQL
+- Uploading embedding + metadata to Qdrant / PostgreSQL
 
 This module is designed to run offline as a batch pipeline.
 
