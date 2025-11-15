@@ -1,4 +1,4 @@
-# Paperfind.io — Semantic Search Engine for Academic Papers
+# Paperfind.io
 
 This repository contains the full codebase for **Paperfind.io**, a cloud-native semantic search engine for academic literature.  
 It is structured as a **modular monorepo**, with each major component isolated into its own directory.
