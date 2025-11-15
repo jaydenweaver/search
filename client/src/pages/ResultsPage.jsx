@@ -107,6 +107,16 @@ function ResultsPage() {
             justify-content: center;
             gap: 1rem;
           }
+            
+          a {
+            font-weight: 500;
+            color: #646cff;
+            text-decoration: inherit;
+          }
+            
+          a:hover {
+            color: #535bf2;
+          }
 
           .results-page {
             max-width: 800px;
@@ -162,6 +172,14 @@ function ResultsPage() {
               color: #000000;
               text-align: center;
               margin-top: 2rem;
+            }
+
+            .result-title {
+              color: #4d56ffff;
+            }
+
+            .result-title:hover {
+              color: #2d37ecff;
             }
 
             .result-abstract {
