@@ -114,7 +114,7 @@ function ResultsPage() {
             flex-direction: column;
             align-items: center;
             margin: 0rem auto;
-            color: #eaeaea;
+            color: #fafafa;
             text-align: left;
           }
 
@@ -149,6 +149,28 @@ function ResultsPage() {
             color: #aaa;
             text-align: center;
             margin-top: 2rem;
+          }
+
+          @media (prefers-color-scheme: light) {
+            .clickable-title {
+              color: #000000;
+              text-decoration: none;
+              cursor: pointer; 
+            }
+
+            .no-results {
+              color: #000000;
+              text-align: center;
+              margin-top: 2rem;
+            }
+
+            .result-abstract {
+              color: #000000;
+            }
+
+            .result-authors {
+              color: #000000b7;
+            }
           }
         `}</style>
       </div>

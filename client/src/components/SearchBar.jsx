@@ -48,7 +48,7 @@ function SearchBar({ initialQuery = "", onSearch, isLoading, horizontal = false 
         }
 
         .search-form button:hover:not(:disabled) {
-            border-color: #ffffff;
+            border-color: #fafafa;
         }
 
         .search-form button:disabled {
@@ -93,6 +93,37 @@ function SearchBar({ initialQuery = "", onSearch, isLoading, horizontal = false 
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .search-form input{
+                border-color: #979797;
+                background-color: #fafafa;
+            }
+
+            .search-form input:hover,
+            .search-form input:focus{ 
+                border-color: #000000;
+            }
+
+            .search-form button {
+                border: 1px solid #979797;
+                background-color: #fafafa;
+                color: #000000;
+            }
+
+            .search-form button:hover:not(:disabled) {
+                border-color: #000000;
+            }
+
+            .search-form button:disabled {
+                border-color: #979797;
+            }
+
+            .spinner {
+                border: 2px solid #000000;
+                border-top-color: #979797;
+            }
         }
         `}</style>
     </form>
