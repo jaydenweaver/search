@@ -11,10 +11,10 @@ Paperfind.io provides fast, meaning-aware retrieval of research papers using vec
 
 ```
 /
-├── embedding/ 	# data ingestion module: JSONL parsing, metadata extraction, embedding, Qdrant + PostgreSQL upload
-├── lambda_search/ 	# AWS Lambda search function
-├── search/ 	# FastAPI search server (can replace lambda for local/dev/self-hosted)
-└── client/		# React (Vite) frontend for querying and visualizing results
+├── embedding/ 		# data ingestion module: JSONL parsing, metadata extraction, embedding, Qdrant + PostgreSQL upload
+├── lambda_search/ 		# AWS Lambda search function
+├── search/ 			# FastAPI search server (can replace lambda for local/dev/self-hosted)
+└── client/			# React (Vite) frontend for querying and visualizing results
 ```
 
 ---
