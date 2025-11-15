@@ -1,146 +1,80 @@
-# Semantic Web Search Engine
+# Paperfind.io — Semantic Search Engine for Academic Papers
 
-A cloud-deployed, serverless-ready semantic search engine that crawls websites, processes HTML into chunks, computes vector embeddings, and performs semantic search over large corpora. Built to showcase modern data engineering, NLP, and scalable architecture skills.
+This repository contains the full codebase for **Paperfind.io**, a cloud-native semantic search engine for academic literature.  
+It is structured as a **modular monorepo**, with each major component isolated into its own directory.
 
----
-
-## Table of Contents
-
-- [Features](#features)  
-- [Architecture](#architecture)  
-- [Tech Stack](#tech-stack)  
-- [Setup](#setup)  
-- [Usage](#usage)  
-- [Configuration](#configuration)  
-- [License](#license)  
+Paperfind.io provides fast, meaning-aware retrieval of research papers using vector embeddings, indexing, Qdrant similarity search, and a modern React frontend.
 
 ---
 
-## Features
+## Repository Structure
 
-| **Feature**                       | **Description**                                                                                 |
-|--------------------------------|---------------------------------------------------------------------------------------------|
-| **Web Crawling**                  | Recursively crawls websites with configurable depth and seed URLs.                          |
-| **HTML Processing**               | Cleans HTML by removing scripts/styles and normalizing whitespace.                           |
-| **Chunking**                      | Splits long pages into overlapping text chunks for embedding.                               |
-| **Vector Embeddings**             | Uses OpenAI for semantic embeddings.                                |
-| **Message Queue**                 | Kafka to decouple crawling, chunking, and embedding.                     |
-| **Database**                      | PostgreSQL stores page metadata and chunk data.                                              |
-| **Vector Database**               | Qdrant performs fast similarity search over embeddings.                                      |
-| **Serverless Cloud Deployment**   | Client and search API hosted on AWS Lambda and S3 for scalable, low-maintenance operation.  |
-
+```
+/
+├── embedding/ 	# data ingestion module: JSONL parsing, metadata extraction, embedding, Qdrant + PostgreSQL upload
+├── lambda_search/ 	# AWS Lambda search function
+├── search/ 	# FastAPI search server (can replace lambda for local/dev/self-hosted)
+└── client/		# React (Vite) frontend for querying and visualizing results
+```
 
 ---
 
-## Architecture
+## Modules Overview
 
-```
-[Web Crawler] --> [PostgreSQL: pages] --> Kafka --> [Chunker Service] --> PostgreSQL: chunks --> Kafka --> [Embedding Service] --> Qdrant
-                                            ^
-                                            |
-                                   HTML cleaned + chunked
-```
-| **Component**          | **Description**                                                                                           |
-|-------------------|-------------------------------------------------------------------------------------------------------|
-| **Crawler**           | Fetches web pages and stores them in PostgreSQL, sending page IDs to Kafka.                           |
-| **Chunker**           | Consumes page IDs, splits pages into chunks, stores them in PostgreSQL, and sends chunk IDs to Kafka.|
-| **Embedding Service** | Converts chunks into vector embeddings and stores them in Qdrant for search.                          |
-| **Client**            | Web interface queries vector DB for semantic search results, hosted serverless on AWS.             |
+### **1. Data Ingestion Module (`embedding/`)**
+Handles the end-to-end process of preparing academic papers for semantic search:
+- JSONL extraction (id, title, authors, abstract, categories)
+- Embedding generation using OpenAI
+- Uploading chunks + metadata to Qdrant / PostgreSQL
 
+This module is designed to run offline as a batch pipeline.
 
 ---
 
-## Tech Stack
+### **2. Lambda Search Function (`lambda_search/`)**
+A lightweight search function intended for **AWS Lambda + API Gateway**.  
+Implements the full semantic search flow:
+- Query embedding  
+- Vector similarity search (Qdrant)  
+- Results aggregation with Qdrant vectors + PostgreSQL metadata
 
-| **Component**           | **Technology / Library**                                   |
-|--------------------|--------------------------------------------------------|
-| **Language**           | Python 3.11, TypeScript                                |
-| **Web Crawling**       | requests, BeautifulSoup                                |
-| **Text Chunking**      | langchain `RecursiveCharacterTextSplitter`           |
-| **Vector Embeddings**  | OpenAI `text-embedding-3-small`                       |
-| **Databases**          | PostgreSQL (pages & chunks), Qdrant (embeddings)     |
-| **Message Queue**      | Kafka                                                  |
-| **Cloud Deployment**   | AWS Lambda, S3                                       |
-| **Web Client**         | React                                                   |
-
+Primarily suited for serverless deployments.
 
 ---
 
-## Setup
+### **3. FastAPI Search Server (`search/`)**
+A fully async FastAPI search server with nearly identical functionality to the Lambda function.  
+Useful for:
+- Local development  
+- Self-hosted / server deployments  
 
-1. Clone the repository:
-```
-git clone https://github.com/jaydenweaver/search.git
-cd search
-```
-2. Install dependencies:
-```
-pip install -r requirements.txt
-```
-3. Configure environment variables (for sensitive info):
-```
-export DB_USER=postgres
-export DB_PASSWORD=yourpassword
-export OPENAI_API_KEY=your_api_key
-```
-4. Edit `config.yaml` to set crawler seeds, Kafka topics, and chunking parameters.
+Drop-in replacement for the lambda module.
 
 ---
 
-## Usage
+### **4. React Frontend (`client/`)**
+A fast UI for academic semantic search.
 
-### Running the crawler
-```
-python main.py --service crawler
-```
-### Running the chunker
-```
-python main.py --service chunker
-```
-### Running the embedding service
-```
-python main.py --service embedder
-```
-### Querying the search API
-```
-- Access the client hosted on S3 or via serverless API Gateway  
-- Enter a search query to get semantically ranked results from Qdrant
-```
+Features:
+- Input-based semantic search  
+- Responsive, minimal UI design  
+
+Runs against either the FastAPI server or the Lambda endpoint.
+
 ---
 
-## Configuration
+## High-Level Search Architecture
 
-Example `config.yaml` snippet:
-```
-crawler:
-  seed_urls:
-    - "https://example.com"
-  max_pages: 100
+1. User submits a query  
+2. System generates query embeddings  
+3. Qdrant retrieves top-k similar embeddings
+4. Embedding + metadata is aggregated into full results
+6. Frontend displays the ranked papers  
 
-database:
-  host: "localhost"
-  port: 5432
-  name: "semantic_search"
-  user: "${DB_USER}"
-  password: "${DB_PASSWORD}"
-
-kafka:
-  bootstrap_servers: "localhost:9092"
-  group_id: "chunker_group"
-  topic_pages_to_chunk: "pages_to_chunk"
-  topic_chunks_to_embed: "chunks_to_embed"
-  enable_auto_commit: true
-  auto_offset_reset: "earliest"
-
-chunk:
-  chunk_size: 500
-  overlap: 50
-  strip_scripts: true
-  clean_whitespace: true
-  include_metadata: true
-```
 ---
 
 ## License
 
-MIT License – feel free to use and modify for personal projects or portfolio purposes.
+MIT License - open and free for personal or commercial use.
+
+
